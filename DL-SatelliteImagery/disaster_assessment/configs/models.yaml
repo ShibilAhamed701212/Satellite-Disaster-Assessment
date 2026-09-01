@@ -1,0 +1,51 @@
+# Model Configuration
+# ================================
+
+models:
+  change_detection:
+    architecture: "SiameseUNet"
+    in_channels: 3
+    params: 3123249
+    vram_fp32_mb: 14
+    vram_fp16_mb: 7
+    weights_path: null
+
+  flood_detection:
+    architecture: "FloodUNet"
+    in_channels: 3
+    params: 1942577
+    vram_fp32_mb: 8
+    vram_fp16_mb: 4
+    weights_path: null
+
+  building_damage:
+    architecture: "BuildingDamageUNet"
+    in_channels: 3
+    num_classes: 4
+    params: 4694628
+    vram_fp32_mb: 19
+    vram_fp16_mb: 9
+    weights_path: null
+
+  land_cover:
+    architecture: "LandCoverUNet"
+    in_channels: 3
+    num_classes: 6
+    params: 1939686
+    vram_fp32_mb: 8
+    vram_fp16_mb: 4
+    weights_path: null
+
+backbones:
+  base_unet:
+    channels: [16, 32, 64, 128, 256]
+    dropout: 0.2
+  segformer:
+    available: false
+    weights_url: null
+  prithvi:
+    available: false
+    weights_url: null
+  swin:
+    available: false
+    weights_url: null

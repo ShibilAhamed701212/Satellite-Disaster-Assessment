@@ -1,0 +1,24 @@
+# Disaster Severity Scoring Configuration
+# =========================================
+# All weights, thresholds, and labels are configurable.
+# Weights should sum to 1.0. If they don't, they will be auto-normalized.
+
+weights:
+  flood: 0.40
+  building_damage: 0.35
+  change: 0.15
+  vegetation_loss: 0.10
+
+# Severity level thresholds (score ranges)
+thresholds:
+  low: 20          # 0-20 = LOW
+  moderate: 40     # 21-40 = MODERATE
+  high: 70         # 41-70 = HIGH
+  critical: 100    # 71-100 = CRITICAL
+
+# Severity level display labels
+severity_labels:
+  low: "LOW"
+  moderate: "MODERATE"
+  high: "HIGH"
+  critical: "CRITICAL"

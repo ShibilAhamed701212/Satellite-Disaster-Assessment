@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "satellite-disaster-assessment"
+version = "3.0.0"
+description = "Satellite Remote Sensing & Multi-Hazard Disaster Intelligence Platform"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "DeepWorks Engineering Team"}
+]
+keywords = [
+    "satellite-imagery",
+    "remote-sensing",
+    "disaster-assessment",
+    "flood-mapping",
+    "building-damage",
+    "change-detection",
+    "geospatial",
+    "deep-learning",
+    "pytorch",
+    "computer-vision",
+    "gis",
+    "digital-twin",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "numpy>=1.24.0",
+    "opencv-python-headless>=4.8.0",
+    "pillow>=9.5.0",
+    "gradio>=4.0.0",
+    "pyyaml>=6.0",
+    "rasterio>=1.3.0",
+    "pytest>=7.0.0",
+]
+
+[project.optional-dependencies]
+geospatial = [
+    "shapely>=2.0",
+    "geopandas>=0.12",
+    "folium>=0.14",
+    "scipy>=1.10",
+    "scikit-learn>=1.2",
+]
+sar = [
+    "scipy>=1.10",
+]
+foundation-models = [
+    "timm>=0.9",
+    "transformers>=4.30",
+]
+rag = [
+    "requests>=2.28",
+    "rich>=13.0",
+]
+optimization = [
+    "onnx>=1.14",
+    "onnxruntime>=1.15",
+]
+all = [
+    "satellite-disaster-assessment[geospatial,sar,foundation-models,rag,optimization]",
+]
+
+[project.scripts]
+disaster-analyzer = "cli:main"
+disaster-ui = "app:main"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["DL-SatelliteImagery/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.pyright]
+include = ["DL-SatelliteImagery", "app.py", "cli.py"]
+extraPaths = ["DL-SatelliteImagery"]
+venvPath = "."
+venv = ".venv"

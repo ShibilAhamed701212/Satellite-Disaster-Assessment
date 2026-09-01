@@ -1,0 +1,4 @@
+# Placeholder for trained model weights.
+# Place trained .pth files here:
+#   - siamese_unet.pth  (change detection)
+#   - flood_unet.pth    (flood segmentation)

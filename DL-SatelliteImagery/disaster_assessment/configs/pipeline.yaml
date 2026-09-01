@@ -1,0 +1,33 @@
+# Pipeline Configuration
+# ================================
+
+pipeline:
+  target_size: [256, 256]
+  enable_feature_alignment: false
+  enable_color_normalization: true
+
+  stages:
+    - validate
+    - align
+    - segment_landcover
+    - detect_change
+    - detect_flood
+    - assess_damage
+    - compute_landchange
+    - compute_severity
+    - render_visualizations
+
+optional_stages:
+  - tile_large_raster
+  - compute_spectral_indices
+  - process_sar
+  - analyze_dem
+  - export_vectors
+  - run_copilot
+  - update_digital_twin
+
+memory:
+  max_gpu_memory_mb: 380
+  enable_mixed_precision: true
+  cleanup_after_inference: true
+  gc_after_run: true

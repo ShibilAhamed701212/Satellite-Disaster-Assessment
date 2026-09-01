@@ -1,0 +1,12 @@
+{
+  "include": [
+    "DL-SatelliteImagery",
+    "app.py",
+    "cli.py"
+  ],
+  "extraPaths": [
+    "DL-SatelliteImagery"
+  ],
+  "venvPath": ".",
+  "venv": ".venv"
+}

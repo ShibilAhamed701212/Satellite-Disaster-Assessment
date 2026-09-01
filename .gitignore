@@ -1,0 +1,52 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Python Bytecode & Packaging
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
+
+# Environment & Secrets
+.env
+.env.local
+
+# Model Weights (large binary files)
+*.pth
+*.h5
+*.onnx
+
+# Test & Cache
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Node (if any Gradio/frontend tooling)
+node_modules/
+package-lock.json
+yarn.lock
+
+# CLI Output Reports (generated at runtime)
+report.json
+sample_report.json
+
+# Downloaded / cached sample data
+sample_images/downloaded/
+
+# Tooling Metadata
+.freebuff/

@@ -1,0 +1,46 @@
+{
+  "change_percentage": 0.0,
+  "vegetation_loss_percentage": 2.45,
+  "water_expansion_percentage": 0.0,
+  "measurement_basis": "geospatially calculated (user_supplied)",
+  "area_status": "Calculated from user ground resolution (GSD = 250.000 m/pixel, Pixel Area = 62500.000 m\u00b2)",
+  "warnings": [
+    "Alignment: PRE image resized from 512\u00d7512 to 256\u00d7256",
+    "Alignment: POST image resized from 512\u00d7512 to 256\u00d7256"
+  ],
+  "flood": {
+    "flooded_pixels": 65536,
+    "total_pixels": 65536,
+    "flood_percentage": 100.0,
+    "flood_area_m2": 4096000000.0,
+    "flood_area_km2": 4096.0,
+    "area_status": "Calculated from user ground resolution (GSD = 250.000 m/pixel, Pixel Area = 62500.000 m\u00b2)",
+    "source_type": "user_supplied",
+    "crs": null
+  },
+  "flood_percentage": 100.0,
+  "flood_area_m2": 4096000000.0,
+  "flood_area_km2": 4096.0,
+  "building_damage": {
+    "damage_mode": "trained",
+    "model_available": true,
+    "overall_damage_score": 0.0,
+    "total_building_pixels": 65536,
+    "disclaimer": "TRAINED DAMAGE MODEL: 4-class building damage classification (Undamaged, Minor, Major, Destroyed).",
+    "classes": {
+      "undamaged_percentage": 100.0,
+      "minor_damage_percentage": 0.0,
+      "major_damage_percentage": 0.0,
+      "destroyed_percentage": 0.0
+    },
+    "pixel_counts": {
+      "Undamaged": 65536,
+      "Minor Damage": 0,
+      "Major Damage": 0,
+      "Destroyed": 0
+    }
+  },
+  "severity_score": 40.24,
+  "severity_level": "HIGH",
+  "total_changed_percentage": 47.35
+}

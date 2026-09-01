@@ -1,0 +1,39 @@
+# Data Sources Configuration
+# ================================
+
+sentinel2:
+  enabled: false
+  api_url: "https://scihub.copernicus.eu/dhus"
+  auth_required: true
+  cache_dir: "cache/sentinel2"
+
+sentinel1:
+  enabled: false
+  api_url: "https://scihub.copernicus.eu/dhus"
+  auth_required: true
+  cache_dir: "cache/sentinel1"
+
+weather:
+  enabled: false
+  provider: null
+  api_key_env: "WEATHER_API_KEY"
+
+mosdac:
+  enabled: false
+  api_url: "https://www.mosdac.gov.in"
+  auth_required: false
+
+bhoonidhi:
+  enabled: false
+  api_url: "https://bhoonidhi.nrsc.gov.in"
+  auth_required: true
+
+cache:
+  directory: "cache"
+  max_size_gb: 10
+  ttl_hours: 168  # 7 days
+
+retry:
+  max_retries: 3
+  backoff_seconds: 2
+  rate_limit_per_minute: 10

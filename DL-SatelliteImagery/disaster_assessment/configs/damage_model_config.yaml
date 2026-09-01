@@ -1,0 +1,27 @@
+# Building Damage Assessment Model Configuration
+# ===============================================
+
+model:
+  name: "BuildingDamageUNet"
+  in_channels: 3
+  num_classes: 4
+  dropout: 0.2
+  classes:
+    0: "Undamaged"
+    1: "Minor Damage"
+    2: "Major Damage"
+    3: "Destroyed"
+
+training:
+  batch_size: 4
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  epochs: 20
+  patch_size: [256, 256]
+  loss:
+    ce_weight: 0.5
+    dice_weight: 0.5
+
+inference:
+  default_mode: "auto"  # "auto", "trained", or "estimated"
+  weights_path: "DL-SatelliteImagery/disaster_assessment/weights/building_damage/best_damage_model.pth"

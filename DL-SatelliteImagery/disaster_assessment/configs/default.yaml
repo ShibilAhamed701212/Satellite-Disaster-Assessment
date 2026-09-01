@@ -1,0 +1,58 @@
+# Default Pipeline Configuration
+# ================================
+# Centralized configuration for the Disaster Intelligence Platform
+
+models:
+  change_detection:
+    weights: null  # siamese_unet.pth not available
+    enabled: true
+    threshold: 0.5
+    minimum_iou: 0.4
+    minimum_f1: 0.4
+    minimum_epoch: 5
+
+  flood_detection:
+    weights: null  # flood_unet.pth not available
+    enabled: true
+    threshold: 0.5
+    minimum_iou: 0.4
+    minimum_f1: 0.4
+    minimum_epoch: 5
+
+  building_damage:
+    weights: "building_damage/best_damage_model.pth"
+    enabled: true
+    threshold: 0.5
+    minimum_iou: 0.3
+    minimum_f1: 0.3
+    minimum_epoch: 5
+
+processing:
+  tile_size: 512
+  overlap: 128
+  target_size: [256, 256]
+  auto_tile_threshold: 1024
+  device: "auto"
+
+features:
+  land_cover: true
+  change_detection: true
+  flood_detection: true
+  building_damage: true
+  spectral_analysis: true
+  sar: false
+  dem: false
+  vector_export: true
+  digital_twin: true
+  copilot: false
+  interactive_map: true
+  onnx_export: false
+  tensorrt: false
+
+export:
+  formats:
+    - geojson
+  output_dir: "results"
+
+severity_config_path: null
+gsd_meters: null
