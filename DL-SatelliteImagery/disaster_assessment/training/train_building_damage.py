@@ -30,10 +30,19 @@ from disaster_assessment.datasets.building_damage_dataset import (
 )
 from disaster_assessment.models.base_unet import get_device
 from disaster_assessment.models.building_damage_model import (
-    DAMAGE_CLASSES,
     NUM_DAMAGE_CLASSES,
     BuildingDamageUNet,
 )
+
+# Default locations, resolved from the repository root so the script works from any cwd.
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+DEFAULT_DATA_DIR = os.path.join(REPO_ROOT, "data", "damage_dataset")
+DEFAULT_OUTPUT_DIR = os.path.join(
+    REPO_ROOT, "DL-SatelliteImagery", "disaster_assessment", "weights", "building_damage"
+)
+# Dry runs train on random synthetic data; keep them away from real data and weights.
+DRY_RUN_DATA_DIR = os.path.join(REPO_ROOT, "runs", "dry_run", "data")
+DRY_RUN_OUTPUT_DIR = os.path.join(REPO_ROOT, "runs", "dry_run", "weights")
 
 
 class MultiClassDiceLoss(nn.Module):
@@ -187,15 +196,19 @@ def evaluate(
 
 def train_building_damage(
     data_dir: str,
-    output_dir: str = "DL-SatelliteImagery/disaster_assessment/weights/building_damage",
+    output_dir: str = DEFAULT_OUTPUT_DIR,
     epochs: int = 10,
     batch_size: int = 4,
     lr: float = 1e-3,
     resume_path: Optional[str] = None,
     device: Optional[torch.device] = None,
+    synthetic_data: bool = False,
 ) -> str:
     """
     Main training function. Returns path to best saved model weights.
+
+    ``synthetic_data`` is recorded in the checkpoint so the inference-time
+    validator refuses models trained on generated dry-run data.
     """
     if device is None:
         device = get_device()
@@ -219,7 +232,7 @@ def train_building_damage(
     best_val_iou = 0.0
 
     if resume_path and os.path.isfile(resume_path):
-        ckpt = torch.load(resume_path, map_location=device)
+        ckpt = torch.load(resume_path, map_location=device, weights_only=True)
         model.load_state_dict(ckpt["model_state_dict"])
         optimizer.load_state_dict(ckpt["optimizer_state_dict"])
         start_epoch = ckpt.get("epoch", 0) + 1
@@ -227,7 +240,7 @@ def train_building_damage(
         print(f"[Training] Resumed from {resume_path} (epoch {start_epoch})")
 
     print(f"\n{'='*60}")
-    print(f"  BUILDING DAMAGE ASSESSMENT TRAINING PIPELINE")
+    print("  BUILDING DAMAGE ASSESSMENT TRAINING PIPELINE")
     print(f"  Device: {device} | Epochs: {epochs} | Batch Size: {batch_size}")
     print(f"  Training samples: {len(train_loader.dataset)}")
     print(f"{'='*60}\n")
@@ -240,9 +253,11 @@ def train_building_damage(
 
         val_msg = ""
         val_iou = train_metrics["mean_iou"]
+        val_f1 = train_metrics["macro_f1"]
         if val_loader is not None and len(val_loader.dataset) > 0:
             val_loss, val_metrics = evaluate(model, val_loader, criterion, device)
             val_iou = val_metrics["mean_iou"]
+            val_f1 = val_metrics["macro_f1"]
             val_msg = f" | Val Loss: {val_loss:.4f} | Val mIoU: {val_iou:.1f}% | Val Acc: {val_metrics['accuracy']:.1f}%"
 
         print(
@@ -251,7 +266,8 @@ def train_building_damage(
             f"{val_msg}"
         )
 
-        # Checkpoint saving
+        # Checkpoint saving. "metrics" uses 0-1 fractions, as read by
+        # ModelValidator's quality gates.
         is_best = val_iou >= best_val_iou
         if is_best:
             best_val_iou = val_iou
@@ -260,6 +276,8 @@ def train_building_damage(
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),
                     "best_val_iou": best_val_iou,
+                    "metrics": {"val_iou": val_iou / 100.0, "val_f1": val_f1 / 100.0},
+                    "synthetic_data": synthetic_data,
                 },
                 best_model_path,
             )
@@ -270,6 +288,7 @@ def train_building_damage(
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "best_val_iou": best_val_iou,
+                "synthetic_data": synthetic_data,
             },
             latest_ckpt_path,
         )
@@ -280,18 +299,29 @@ def train_building_damage(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train Building Damage Model")
-    parser.add_argument("--data_dir", type=str, default="data/damage_dataset")
-    parser.add_argument("--output_dir", type=str, default="DL-SatelliteImagery/disaster_assessment/weights/building_damage")
+    parser.add_argument("--data_dir", type=str, default=None,
+                        help=f"Dataset root (default: {DEFAULT_DATA_DIR}; dry run: {DRY_RUN_DATA_DIR})")
+    parser.add_argument("--output_dir", type=str, default=None,
+                        help=f"Checkpoint directory (default: {DEFAULT_OUTPUT_DIR}; dry run: {DRY_RUN_OUTPUT_DIR})")
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--dry_run", action="store_true", help="Generate synthetic data and train 1 epoch")
+    parser.add_argument("--resume", type=str, default=None, help="Resume from a latest_checkpoint.pth")
+    parser.add_argument(
+        "--dry_run",
+        action="store_true",
+        help="Generate synthetic data and train 1 epoch (writes under runs/dry_run/ by default)",
+    )
     args = parser.parse_args()
 
     if args.dry_run:
-        print("[Dry Run] Generating synthetic training data...")
+        args.data_dir = args.data_dir or DRY_RUN_DATA_DIR
+        args.output_dir = args.output_dir or DRY_RUN_OUTPUT_DIR
+        print(f"[Dry Run] Generating synthetic training data in {args.data_dir} ...")
         create_synthetic_damage_data(args.data_dir, num_samples=8)
         args.epochs = 1
+    args.data_dir = args.data_dir or DEFAULT_DATA_DIR
+    args.output_dir = args.output_dir or DEFAULT_OUTPUT_DIR
 
     train_building_damage(
         data_dir=args.data_dir,
@@ -299,4 +329,6 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.lr,
+        resume_path=args.resume,
+        synthetic_data=args.dry_run,
     )

@@ -2,9 +2,8 @@
 Retriever for the disaster intelligence RAG system.
 """
 
-from typing import List, Optional
+from typing import List
 
-import numpy as np
 
 from .ingestion import DocumentChunk
 

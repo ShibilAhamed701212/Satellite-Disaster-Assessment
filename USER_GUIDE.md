@@ -239,6 +239,7 @@ data/damage_dataset/
 ```powershell
 .\.venv\Scripts\python.exe DL-SatelliteImagery\disaster_assessment\training\train_building_damage.py --dry_run
 ```
+The dry run writes synthetic data and a throwaway checkpoint under `runs/dry_run/` (git-ignored). The checkpoint is flagged as synthetic, so the app refuses to load it as a trained model.
 
 ---
 
@@ -251,7 +252,7 @@ To run the complete automated test suite:
 ```
 
 ```
-======================== 92 passed, 2 skipped in 14.45s ========================
+======================= 240 passed, 2 skipped (CPU, Python 3.11) =======================
 ```
 
 ---

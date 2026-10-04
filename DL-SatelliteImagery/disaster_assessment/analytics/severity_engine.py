@@ -41,11 +41,11 @@ class SeverityResult:
 
     def summary(self) -> str:
         lines = [
-            f"Disaster Severity Assessment:",
+            "Disaster Severity Assessment:",
             f"  Score: {self.total_score:.1f} / 100",
             f"  Level: {self.severity_level}",
-            f"",
-            f"  Component Breakdown:",
+            "",
+            "  Component Breakdown:",
         ]
         for name, info in self.component_scores.items():
             raw = info.get("raw_value", 0)
@@ -59,7 +59,7 @@ class SeverityResult:
                 f"contribution={contribution:.1f}"
             )
         lines.extend([
-            f"",
+            "",
             f"  {self.explanation}",
         ])
         return "\n".join(lines)

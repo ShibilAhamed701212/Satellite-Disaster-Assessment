@@ -43,6 +43,23 @@ analyzer = DisasterAnalyzer(
 )
 
 
+# Sample imagery lives at the repository root, one level above this file.
+SAMPLE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sample_images"))
+
+
+def _upload_path(uploaded):
+    """Return the local path of a gr.File upload.
+
+    Gradio 4+ passes a filepath string; Gradio 3 passed a tempfile wrapper
+    with a ``.name`` attribute.
+    """
+    if uploaded is None:
+        return None
+    if isinstance(uploaded, (str, os.PathLike)):
+        return os.fspath(uploaded)
+    return getattr(uploaded, "name", None)
+
+
 # ============================================================
 # Feature Status Function
 # ============================================================
@@ -59,9 +76,9 @@ def get_feature_status():
 
     # Land cover
     lc_mode = "HSV COLOR HEURISTIC (not a trained model)"
-    lines.append(f"  [HEURISTIC] Land Cover Segmentation")
+    lines.append("  [HEURISTIC] Land Cover Segmentation")
     lines.append(f"      Mode: {lc_mode}")
-    lines.append(f"      Note: Results are approximate. Not AI-based.")
+    lines.append("      Note: Results are approximate. Not AI-based.")
     lines.append("")
 
     # Change detection
@@ -72,7 +89,7 @@ def get_feature_status():
     lines.append(f"      Status: {cd_status}")
     lines.append(f"      Mode: {cd_mode}")
     if cd_mode != "trained":
-        lines.append(f"      Note: No validated trained checkpoint. Output is UNAVAILABLE.")
+        lines.append("      Note: No validated trained checkpoint. Output is UNAVAILABLE.")
     lines.append("")
 
     # Flood detection
@@ -83,7 +100,7 @@ def get_feature_status():
     lines.append(f"      Status: {fd_status}")
     lines.append(f"      Mode: {fd_mode}")
     if fd_mode != "trained":
-        lines.append(f"      Note: No validated trained checkpoint. Output is UNAVAILABLE.")
+        lines.append("      Note: No validated trained checkpoint. Output is UNAVAILABLE.")
     lines.append("")
 
     # Building damage
@@ -94,7 +111,7 @@ def get_feature_status():
     lines.append(f"      Status: {bd_status}")
     lines.append(f"      Mode: {bd_mode}")
     if bd_mode != "trained":
-        lines.append(f"      Fallback: Structural change heuristic (estimated)")
+        lines.append("      Fallback: Structural change heuristic (estimated)")
     else:
         meta = bd_val.get("metadata", {})
         if meta.get("epoch", -1) >= 0:
@@ -105,14 +122,14 @@ def get_feature_status():
 
     # Additional features
     lines.extend([
-        f"  [--] GeoTIFF Tiling: Architecture ready, not connected to pipeline",
-        f"  [--] Multispectral Indices: Architecture ready, not connected to pipeline",
-        f"  [--] SAR Processing: Architecture ready, requires real SAR data",
-        f"  [--] DEM Analysis: Architecture ready, requires DEM input",
-        f"  [--] GIS Vector Export: Architecture ready, not connected to pipeline",
-        f"  [--] Digital Twin: In-memory state, no persistence",
-        f"  [--] RAG Copilot: Architecture ready, requires LLM provider",
-        f"  [--] Data Ingestion: Architecture ready, requires API credentials",
+        "  [--] GeoTIFF Tiling: Architecture ready, not connected to pipeline",
+        "  [--] Multispectral Indices: Architecture ready, not connected to pipeline",
+        "  [--] SAR Processing: Architecture ready, requires real SAR data",
+        "  [--] DEM Analysis: Architecture ready, requires DEM input",
+        "  [--] GIS Vector Export: Architecture ready, not connected to pipeline",
+        "  [--] Digital Twin: In-memory state, no persistence",
+        "  [--] RAG Copilot: Architecture ready, requires LLM provider",
+        "  [--] Data Ingestion: Architecture ready, requires API credentials",
         "",
         "=" * 60,
         "  IMPORTANT: Change Detection and Flood Detection outputs",
@@ -179,7 +196,7 @@ def analyze_disaster(
         gsd = float(meters_per_pixel_val) if meters_per_pixel_val and float(meters_per_pixel_val) > 0 else None
 
         # Parse GeoTIFF path if provided
-        geotiff_path = geotiff_file.name if geotiff_file is not None and hasattr(geotiff_file, "name") else None
+        geotiff_path = _upload_path(geotiff_file)
 
         mode_str = damage_mode_choice.lower()
 
@@ -394,7 +411,7 @@ def create_app():
                 )
 
                 # Tab 1 Examples
-                sample_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "sample_images"))
+                sample_root = SAMPLE_ROOT
                 lc_dir = os.path.join(sample_root, "landcover_tiles")
                 tab1_samples = [
                     [os.path.join(lc_dir, "satellite_urban_city.jpg")],
@@ -603,7 +620,7 @@ if __name__ == "__main__":
     selected_port = get_open_port(7860) or 7860
     print(f"Starting Gradio on port {selected_port}...")
     app.launch(
-        server_name="0.0.0.0",
+        server_name=os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1"),
         server_port=selected_port,
         share=False,
         show_error=True,

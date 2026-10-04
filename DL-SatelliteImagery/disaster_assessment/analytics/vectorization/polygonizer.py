@@ -5,7 +5,7 @@ Uses rasterio.features for contour extraction and shapely for geometry operation
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -40,8 +40,7 @@ def mask_to_polygons(
     """
     try:
         from rasterio import features
-        from shapely.geometry import shape, mapping
-        from shapely.ops import unary_union
+        from shapely.geometry import shape
     except ImportError:
         raise ImportError("rasterio and shapely are required for vectorization. "
                           "Install with: pip install rasterio shapely")
@@ -63,7 +62,6 @@ def mask_to_polygons(
             connectivity=8,
         )
 
-        polygons_for_class = []
         for geom, value in contours:
             if value == 0:
                 continue

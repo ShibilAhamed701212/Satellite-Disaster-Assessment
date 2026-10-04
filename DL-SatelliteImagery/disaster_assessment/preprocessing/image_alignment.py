@@ -8,9 +8,8 @@ Handles:
     - Alignment quality assessment
 """
 
-import warnings
 from dataclasses import dataclass, field
-from typing import Optional, Tuple
+from typing import Tuple
 
 import cv2
 import numpy as np

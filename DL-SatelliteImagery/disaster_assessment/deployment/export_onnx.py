@@ -5,7 +5,7 @@ Status: DEPENDENCY_MISSING - requires onnx package.
 """
 
 import os
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 

@@ -2,15 +2,14 @@
 Tests for analytics modules (area, damage, land change, severity).
 """
 
-import pytest
 import numpy as np
 import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from disaster_assessment.analytics.area_calculator import AreaCalculator, AreaResult
-from disaster_assessment.analytics.damage_metrics import DamageMetrics, UNDAMAGED, POSSIBLE_DAMAGE, SEVERE_DAMAGE
+from disaster_assessment.analytics.area_calculator import AreaCalculator
+from disaster_assessment.analytics.damage_metrics import DamageMetrics
 from disaster_assessment.analytics.land_change_metrics import LandChangeMetrics
 from disaster_assessment.analytics.severity_engine import SeverityEngine
 

@@ -5,7 +5,7 @@ Creates side-by-side and grid layout comparison panels
 for disaster assessment outputs.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import List, Tuple
 
 import cv2
 import numpy as np
@@ -109,9 +109,6 @@ class ComparisonRenderer:
 
             y_start = row * (cell_h + self.title_height + self.padding) + self.padding
             x_start = col * (cell_w + self.padding) + self.padding
-
-            y_end = y_start + titled.shape[0]
-            x_end = x_start + titled.shape[1]
 
             # Ensure we don't overflow canvas
             actual_h = min(titled.shape[0], canvas.shape[0] - y_start)

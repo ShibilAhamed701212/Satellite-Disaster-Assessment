@@ -22,7 +22,7 @@ measurements correspond to original raster dimensions.
 import math
 import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -100,7 +100,6 @@ class GeospatialAreaCalculator:
 
         try:
             import rasterio
-            from rasterio.crs import CRS
 
             with rasterio.open(file_path) as src:
                 info.raster_width = src.width
@@ -167,14 +166,24 @@ class GeospatialAreaCalculator:
         flood_mask: np.ndarray,
         geotiff_path: Optional[str] = None,
         meters_per_pixel: Optional[float] = None,
+        source_shape: Optional[Tuple[int, int]] = None,
     ) -> GeospatialFloodResult:
         """
         Calculate flood area with support for GeoTIFF, meters_per_pixel, or pixel fallback.
 
+        The mask may be a resized copy of the source image (the models run at a
+        fixed target size). Ground resolution always describes the source image,
+        so each mask pixel covers (source pixels / mask pixels) source pixels.
+
         Args:
             flood_mask: 2D binary numpy array (1 = flooded, 0 = non-flooded).
-            geotiff_path: Optional path to GeoTIFF file.
-            meters_per_pixel: Optional user-supplied ground resolution.
+            geotiff_path: Optional path to GeoTIFF file. The mask is assumed to
+                cover the whole raster.
+            meters_per_pixel: Optional user-supplied ground resolution of the
+                source image.
+            source_shape: (height, width) of the source image the mask was
+                resized from. Used with meters_per_pixel; defaults to the mask
+                shape (no resampling).
 
         Returns:
             GeospatialFloodResult with exact area and measurement status.
@@ -190,12 +199,19 @@ class GeospatialAreaCalculator:
         )
 
         # MODE 1: GeoTIFF metadata extraction
+        geotiff_warnings: List[str] = []
+        if geotiff_path and not os.path.isfile(geotiff_path):
+            geotiff_warnings.append(f"GeoTIFF not found: {geotiff_path}")
         if geotiff_path and os.path.isfile(geotiff_path):
             geo_info = cls.extract_geotiff_metadata(geotiff_path)
             result.georeference = geo_info
+            geotiff_warnings = list(geo_info.warnings)
 
             if geo_info.has_georeference and geo_info.pixel_area_m2 is not None:
-                result.flood_area_m2 = flooded_pixels * geo_info.pixel_area_m2
+                scale = cls._resample_factor(
+                    flood_mask.shape, (geo_info.raster_height, geo_info.raster_width)
+                )
+                result.flood_area_m2 = flooded_pixels * geo_info.pixel_area_m2 * scale
                 result.flood_area_km2 = result.flood_area_m2 / 1_000_000.0
                 crs_label = geo_info.crs_name or "Unknown CRS"
                 result.area_status = (
@@ -206,7 +222,8 @@ class GeospatialAreaCalculator:
 
         # MODE 2: User-supplied meters_per_pixel
         if meters_per_pixel is not None and meters_per_pixel > 0:
-            pixel_area_m2 = float(meters_per_pixel) ** 2
+            scale = cls._resample_factor(flood_mask.shape, source_shape)
+            pixel_area_m2 = float(meters_per_pixel) ** 2 * scale
             result.flood_area_m2 = flooded_pixels * pixel_area_m2
             result.flood_area_km2 = result.flood_area_m2 / 1_000_000.0
             result.georeference = GeoreferenceInfo(
@@ -215,17 +232,34 @@ class GeospatialAreaCalculator:
                 pixel_width_m=float(meters_per_pixel),
                 pixel_height_m=float(meters_per_pixel),
                 pixel_area_m2=pixel_area_m2,
+                warnings=geotiff_warnings,
             )
             result.area_status = (
                 f"Calculated from user ground resolution (GSD = {meters_per_pixel:.3f} m/pixel, "
                 f"Pixel Area = {pixel_area_m2:.3f} m²)"
             )
+            if scale != 1.0:
+                result.area_status += (
+                    f" — mask resampled from {source_shape[1]}×{source_shape[0]} source image"
+                )
             return result
 
         # MODE 3: No geospatial resolution available
         result.area_status = "Geospatial resolution unavailable — reporting pixel and percentage area only."
-        result.georeference = GeoreferenceInfo(source_type="none")
+        result.georeference = GeoreferenceInfo(source_type="none", warnings=geotiff_warnings)
         return result
+
+    @staticmethod
+    def _resample_factor(
+        mask_shape: Tuple[int, ...], source_shape: Optional[Tuple[int, int]]
+    ) -> float:
+        """Source pixels represented by one mask pixel (1.0 when not resampled)."""
+        if not source_shape or source_shape[0] <= 0 or source_shape[1] <= 0:
+            return 1.0
+        mask_pixels = int(mask_shape[0]) * int(mask_shape[1])
+        if mask_pixels <= 0:
+            return 1.0
+        return (int(source_shape[0]) * int(source_shape[1])) / mask_pixels
 
     @staticmethod
     def reconstruct_full_mask(

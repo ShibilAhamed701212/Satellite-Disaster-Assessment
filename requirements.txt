@@ -12,8 +12,13 @@ numpy>=1.24.0
 rasterio>=1.3.0
 pyyaml>=6.0
 
+# SAR filtering (scipy) and GIS vectorization (shapely) modules
+scipy>=1.10
+shapely>=2.0
+
 # Interactive Web Application
 gradio>=4.0.0
 
-# Automated Testing
+# Automated Testing & Linting
 pytest>=7.0.0
+ruff>=0.5

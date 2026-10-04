@@ -139,7 +139,6 @@ def check_feature_status() -> FeatureStatusRegistry:
     registry = get_feature_registry()
     registry._features.clear()  # Fresh check
 
-    import os
     weights_dir = os.path.join(os.path.dirname(__file__), "weights")
 
     # --- Core Models ---
@@ -190,7 +189,7 @@ def check_feature_status() -> FeatureStatusRegistry:
         # Try to validate the checkpoint
         try:
             import torch
-            checkpoint = torch.load(damage_w, map_location="cpu", weights_only=False)
+            checkpoint = torch.load(damage_w, map_location="cpu", weights_only=True)
             epoch = checkpoint.get("epoch", -1) if isinstance(checkpoint, dict) else -1
             metrics = checkpoint.get("metrics", {}) if isinstance(checkpoint, dict) else {}
             iou = metrics.get("iou", metrics.get("val_iou", -1))
@@ -254,7 +253,7 @@ def check_feature_status() -> FeatureStatusRegistry:
     # --- New Phase Modules ---
     # Phase A: Tiling
     try:
-        import rasterio
+        import rasterio  # noqa: F401 (availability check)
         registry.register(
             "large_geotiff_tiling",
             Status.READY,
@@ -269,7 +268,7 @@ def check_feature_status() -> FeatureStatusRegistry:
 
     # Phase B: Vectorization
     try:
-        import shapely
+        import shapely  # noqa: F401 (availability check)
         registry.register(
             "gis_vector_export",
             Status.READY,
@@ -338,7 +337,7 @@ def check_feature_status() -> FeatureStatusRegistry:
 
     # Phase J: ONNX
     try:
-        import onnx
+        import onnx  # noqa: F401 (availability check)
         registry.register(
             "onnx_export",
             Status.READY,

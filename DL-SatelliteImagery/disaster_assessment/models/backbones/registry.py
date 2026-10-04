@@ -4,9 +4,8 @@ Model backbone registry for pluggable architectures.
 Supports registration and lookup of different backbone architectures.
 """
 
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional
 
-from .base import BackboneBase
 
 
 MODEL_REGISTRY: Dict[str, type] = {}

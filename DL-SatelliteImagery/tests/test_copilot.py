@@ -2,7 +2,6 @@
 Tests for the RAG copilot and data ingestion.
 """
 
-import pytest
 import sys
 import os
 import tempfile
@@ -13,7 +12,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from disaster_assessment.copilot.agent import CopilotAgent, CopilotResponse
 from disaster_assessment.copilot.rag.ingestion import RAGIngestor
 from disaster_assessment.copilot.rag.retriever import RAGRetriever
-from disaster_assessment.data.ingestion.base import DataProvider, DataProduct
 from disaster_assessment.data.ingestion.cache import DataCache
 from disaster_assessment.data.ingestion.scheduler import IngestionScheduler
 

@@ -2,7 +2,6 @@
 Tests for the feature status system.
 """
 
-import pytest
 import sys
 import os
 
@@ -10,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from disaster_assessment.feature_status import (
     Status, FeatureReport, FeatureStatusRegistry,
-    get_feature_registry, check_feature_status,
+    check_feature_status,
 )
 
 

@@ -12,9 +12,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from disaster_assessment.analytics.geospatial_area import (
-    GeoreferenceInfo,
     GeospatialAreaCalculator,
-    GeospatialFloodResult,
 )
 from disaster_assessment.pipeline.disaster_analyzer import DisasterAnalyzer
 

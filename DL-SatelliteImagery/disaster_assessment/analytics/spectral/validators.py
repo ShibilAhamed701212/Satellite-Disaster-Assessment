@@ -2,7 +2,7 @@
 Validators for spectral band inputs.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 
@@ -91,4 +91,4 @@ def extract_band(
                 raise ValueError(f"Band index {band_idx} out of range for {data.shape[2]} channels")
             return data[:, :, band_idx - 1]
 
-    raise ValueError(f"Cannot extract band from 2D data")
+    raise ValueError("Cannot extract band from 2D data")

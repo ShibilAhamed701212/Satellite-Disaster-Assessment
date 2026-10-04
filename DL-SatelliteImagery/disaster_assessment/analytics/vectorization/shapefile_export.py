@@ -26,8 +26,6 @@ def export_shapefile(
     """
     try:
         import geopandas as gpd
-        import pandas as pd
-        from shapely.geometry import mapping
     except ImportError:
         raise ImportError("geopandas is required for Shapefile export. "
                           "Install with: pip install geopandas")

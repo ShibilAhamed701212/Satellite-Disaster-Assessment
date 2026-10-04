@@ -50,3 +50,6 @@ sample_images/downloaded/
 
 # Tooling Metadata
 .freebuff/
+
+# Training dry-run output (synthetic data + throwaway checkpoints)
+runs/

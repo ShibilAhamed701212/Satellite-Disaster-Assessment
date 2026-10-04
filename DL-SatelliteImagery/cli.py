@@ -98,7 +98,7 @@ def cmd_analyze(args):
         summary_path = os.path.join(args.output, "summary.txt")
         with open(summary_path, "w") as f:
             f.write(report.summary())
-        print(f"  Saved: summary.txt")
+        print("  Saved: summary.txt")
 
     print("\nAnalysis complete.")
     return 0

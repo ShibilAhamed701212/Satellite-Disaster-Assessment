@@ -1,271 +1,329 @@
-# 🛰️ Satellite Disaster Assessment & Remote Sensing Intelligence System
+# 🛰️ Satellite Disaster Assessment & Remote Sensing Toolkit
 
-<div align="center">
+[![CI](https://github.com/ShibilAhamed701212/Satellite-Disaster-Assessment/actions/workflows/ci.yml/badge.svg)](https://github.com/ShibilAhamed701212/Satellite-Disaster-Assessment/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)
+![Gradio](https://img.shields.io/badge/Gradio-Web%20UI-FF7C00?logo=gradio&logoColor=white)
 
-[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-blue?logo=python&logoColor=white)](https://python.org)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.5.1%2BCUDA12.1-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
-[![Gradio](https://img.shields.io/badge/Gradio-Web%20UI-FF7C00?logo=gradio&logoColor=white)](https://gradio.app)
-[![Tests](https://img.shields.io/badge/Tests-92%20Passed-brightgreen?logo=pytest&logoColor=white)](./DL-SatelliteImagery/tests)
-[![Hardware](https://img.shields.io/badge/Hardware-GTX%201650%20Optimized%20(4GB)-76B900?logo=nvidia&logoColor=white)](https://nvidia.com)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+A Python toolkit for comparing **pre- and post-disaster satellite images**: land-cover estimation, change and flood detection, building-damage assessment, geospatial area measurement and a configurable 0–100 severity score. It ships a Gradio web dashboard, a command-line tool and a Python API, plus supporting modules for GeoTIFF tiling, spectral indices, SAR preprocessing, DEM analysis and GIS export.
 
-**An end-to-end deep learning and geospatial remote sensing platform for automated post-disaster damage assessment, surface change detection, flood inundation mapping, and multi-hazard severity scoring.**
-
-[Quick Start](#-quick-start) • [Architecture](#-system-architecture) • [Features](#-core-capabilities) • [Web Dashboard](#-web-dashboard) • [CLI Usage](#-command-line-interface) • [Python API](#-python-api) • [Training](#-model-training) • [Benchmarks](#-hardware-optimization--benchmarks)
-
-</div>
-
----
-
-## 🌟 Highlights
-
-- 🏗️ **4-Class Building Damage Assessment**: Siamese dual-encoder neural segmentation classifying structural damage into `Undamaged`, `Minor Damage`, `Major Damage`, and `Destroyed` (with automated fallback to structural change heuristics when trained weights are absent).
-- 🌊 **Georeferenced Flood Inundation Engine**: Automated GeoTIFF metadata parsing (`rasterio`), projected metric resolution, and WGS-84 ellipsoidal geodesic latitude-adjusted area calculations ($m^2$ and $km^2$).
-- 🔄 **High-Speed Surface Change Detection**: Siamese CNN with multi-scale skip feature differences identifying flood, landslide, wildfire, and urban alterations.
-- 🗺️ **6-Class Baseline Land-Cover Mapping**: Semantic segmentation engine labeling pixels into `Water`, `Land`, `Road`, `Building`, `Vegetation`, and `Unlabeled`.
-- 🌋 **Configurable Severity Scoring Engine**: Rule-based 0–100 disaster severity score (`LOW`, `MODERATE`, `HIGH`, `CRITICAL`) with customizable YAML weights.
-- 🛰️ **Authentic Satellite Benchmarks**: Loaded with authentic **NASA MODIS/VIIRS** multi-spectral and true-color scenes across multiple disaster types and land-cover classes.
-- ⚡ **Lightweight & Laptop Optimized**: Designed for **NVIDIA GTX 1650 4GB VRAM** (< 400 MB peak VRAM footprint, mixed precision, and full CPU fallback).
+> **Current model status — read this first.** The repository contains the model *architectures* and a training pipeline, but **no trained weights** (`*.pth` files are git-ignored and none are published). On a fresh clone:
+>
+> | Component | What actually runs |
+> | :--- | :--- |
+> | Land-cover segmentation | HSV colour heuristic (labelled as such, not a neural network) |
+> | Change detection (SiameseUNet) | **Unavailable** — reported as 0 % with a warning |
+> | Flood detection (FloodUNet) | **Unavailable** — reported as 0 % with a warning |
+> | Building damage (BuildingDamageUNet) | Falls back to a structural-change heuristic on the land-cover masks |
+> | Severity score, area and land-change metrics | Fully working; unavailable components are excluded and flagged |
+>
+> Every report states which mode produced each number. Models only run once you supply validated checkpoints (see [Model weights](#-model-weights)).
 
 ---
 
-## 📐 System Architecture
+## ✨ Features
+
+- **Honest, validated inference.** Every checkpoint is checked before use (file present, loadable as tensors only, architecture match, degenerate-weight detection, synthetic dry-run flag). Untrained or failing models are refused and the report says so.
+- **4-class building damage** (`Undamaged`, `Minor`, `Major`, `Destroyed`) with a Siamese dual-encoder U-Net when trained weights exist; otherwise an *estimated* `Possible` / `Severe` change heuristic.
+- **Change and flood detection** with a Siamese U-Net and a lightweight flood U-Net (require trained weights).
+- **Geospatial flood area** from a GeoTIFF (projected CRS in metres, geographic CRS converted with WGS-84 latitude-dependent scale) or a user-supplied ground resolution (m/pixel). Area is measured at the *source image's* resolution even though models run on a 256×256 copy. Without either, only pixel percentages are reported — km² are never invented.
+- **Configurable severity score** (0–100 → `LOW` / `MODERATE` / `HIGH` / `CRITICAL`) with weights in [`configs/severity_config.yaml`](DL-SatelliteImagery/disaster_assessment/configs/severity_config.yaml).
+- **Visual outputs:** land-cover maps, change / flood / damage overlays, vegetation-loss overlay and a combined disaster heatmap.
+- **Supporting modules** (tested, not wired into the dashboard): large-GeoTIFF tiling and blending, NDVI/NDWI/NBR/dNBR spectral indices, Sentinel-1 SAR normalisation and speckle filtering, DEM terrain / flood-depth analysis, GeoJSON / KML / Shapefile export, an in-memory "digital twin" state store, a RAG copilot (needs a local Ollama server) and data-ingestion stubs (need API credentials). Run `python DL-SatelliteImagery/cli.py feature-status` to see what is operational in your environment.
+
+---
+
+## 📐 Architecture
 
 ```mermaid
 graph TD
-    A[Pre-Disaster Satellite Tile] --> V[Image Validator & Aligner]
-    B[Post-Disaster Satellite Tile] --> V
-    
-    V --> S1[Keras / Heuristic Land-Cover U-Net]
-    V --> S2[PyTorch Siamese U-Net Change Detector]
-    V --> S3[PyTorch Flood U-Net]
-    V --> S4[BuildingDamageUNet 4-Class Dual-Encoder]
-    
-    S1 --> AN[Analytics Engine]
-    S2 --> AN
-    S3 --> G[Geospatial Engine: GeoTIFF / GSD]
-    G --> AN
-    S4 --> AN
-    
-    AN --> SE[Severity Engine 0-100 Score]
-    AN --> VR[Overlay & Heatmap Visualization]
-    
-    SE --> UI[Unified Gradio Web Dashboard / CLI Output]
-    VR --> UI
+    A[PRE image] --> V[ImageValidator + ImageAligner<br/>resize to 256x256]
+    B[POST image] --> V
+    V --> LC[Land cover<br/>HSV heuristic / optional Keras model]
+    V --> CD[SiameseUNet change detection<br/>needs weights]
+    V --> FD[FloodUNet<br/>needs weights]
+    V --> BD[BuildingDamageInference<br/>trained 4-class or estimated]
+    MV[ModelValidator] -.gates.-> CD
+    MV -.gates.-> FD
+    MV -.gates.-> BD
+    FD --> GA[GeospatialAreaCalculator<br/>GeoTIFF / GSD / pixels]
+    LC --> LM[LandChangeMetrics]
+    LC --> BD
+    CD --> SE[SeverityEngine 0-100]
+    GA --> SE
+    BD --> SE
+    LM --> SE
+    SE --> R[DisasterReport<br/>summary / to_dict / maps]
+    R --> UI[Gradio dashboard / CLI / JSON]
 ```
+
+The orchestrator is [`DisasterAnalyzer`](DL-SatelliteImagery/disaster_assessment/pipeline/disaster_analyzer.py). Models are loaded lazily and run under `torch.no_grad()` (mixed precision on CUDA, CPU fallback otherwise).
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick start
 
-### 1. Installation
+Requires Python 3.10+.
 
-Clone the repository and install dependencies in your virtual environment:
+```bash
+git clone https://github.com/ShibilAhamed701212/Satellite-Disaster-Assessment.git
+cd Satellite-Disaster-Assessment
+python -m venv .venv
+source .venv/bin/activate            # Windows: .\.venv\Scripts\Activate.ps1
 
-```powershell
-# Activate Python 3.11 virtual environment
-.\.venv\Scripts\Activate.ps1
+# Optional: CPU-only PyTorch (smaller download). Skip for the default/CUDA build.
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# Install dependencies
 pip install -r requirements.txt
-
-# (Optional) Install project in editable development mode
-pip install -e .
+pip install -e .                      # optional: adds the disaster-analyzer / disaster-ui commands
 ```
 
-### 2. Launch Interactive Web Dashboard
+Optional extras are declared in `pyproject.toml`: `geospatial` (geopandas, folium, scikit-learn), `foundation-models` (timm, transformers), `rag` (requests, rich), `optimization` (onnx, onnxruntime), `dev`, or `all` — e.g. `pip install -e ".[geospatial]"`.
 
-Launch the Gradio Web UI with a single command:
+### Launch the dashboard
 
-```powershell
-python app.py
+```bash
+python app.py          # or: disaster-ui
 ```
-*Open your browser at **`http://localhost:7860`** (or auto-selected port `7861` if 7860 is in use).*
+
+It opens on `http://127.0.0.1:7860` (the next free port up to 7879 if 7860 is taken). It binds to localhost only; set `GRADIO_SERVER_NAME=0.0.0.0` to expose it on your network.
 
 ---
 
-## 🖥️ Web Dashboard
+## 🖥️ Web dashboard
 
-The web dashboard provides three specialized operation tabs:
+| Tab | Input | Output |
+| :--- | :--- | :--- |
+| **Land-Cover Segmentation** | One image | 6-class overlay + colour map (Water, Land, Road, Building, Vegetation, Unlabeled) and class distribution |
+| **Disaster Assessment** | PRE + POST images, damage mode, optional GSD or GeoTIFF | Land-cover pair, change map, flood map, damage overlay, heatmap, vegetation-loss overlay, metrics and severity text |
+| **Change Detection** | Two images | Change mask (requires trained SiameseUNet weights; otherwise reports UNAVAILABLE) |
+| **Feature Status** | — | Live validation status of every model |
 
-| Tab | Functionality | Input | Key Outputs |
-| :--- | :--- | :--- | :--- |
-| **1. Land-Cover Segmentation** | Single-image environmental classification | 1 Satellite Image | 6-class color overlay with dynamic legend |
-| **2. Disaster Assessment** | Full multi-hazard disaster intelligence | PRE + POST Image Pair | Change map, Flood map, Building damage overlay, Disaster heatmap, Severity score, Metric $m^2 / km^2$ area |
-| **3. Quick Change Detection** | Fast surface difference screening | PRE + POST Image Pair | High-contrast red-highlighted change mask |
+The first three tabs include clickable sample inputs from `sample_images/`.
+
+Screenshots below were captured from this repository running on CPU with no trained weights, so change/flood maps are empty and damage is estimated:
+
+| Land-cover segmentation | Disaster assessment (Indus flood sample, GSD 250 m) |
+| :---: | :---: |
+| ![Land-cover tab](docs/screenshots/landcover.jpg) | ![Disaster assessment tab](docs/screenshots/disaster.jpg) |
+
+![Feature status tab](docs/screenshots/status.jpg)
 
 ---
 
-## 💻 Command-Line Interface (CLI)
+## 💻 Command-line interface
 
-Run disaster assessment directly from the command line:
+Root CLI (`cli.py`, also installed as `disaster-analyzer`):
 
-```powershell
-# Analyze pre/post satellite pair with 250m/pixel ground resolution:
-python cli.py --pre sample_images/pre_disaster.png --post sample_images/post_disaster.png --gsd 250.0
+```bash
+# Pre/post assessment with a 250 m/pixel ground resolution, JSON report and overlay image
+python cli.py --pre sample_images/pre_disaster.png --post sample_images/post_disaster.png \
+              --gsd 250 --json-out report.json --save-vis overlay.png
 
-# Save structured machine-readable JSON report:
-python cli.py --pre sample_images/pre_disaster.png --post sample_images/post_disaster.png --gsd 250.0 --json-out report.json
+# Use a GeoTIFF for CRS / resolution instead of --gsd
+python cli.py --pre pre.tif --post post.tif --geotiff post.tif
 
-# Run single-image land-cover segmentation:
+# Single-image land-cover estimate
 python cli.py --single sample_images/landcover_tiles/satellite_urban_city.jpg
 ```
 
-### Sample Output:
+Options: `--mode auto|trained|estimated` (damage mode, default `auto`), `--gsd`, `--geotiff`, `--json-out`, `--save-vis`.
+
+Developer CLI with sub-commands (`DL-SatelliteImagery/cli.py`):
+
+```bash
+python DL-SatelliteImagery/cli.py analyze --pre pre.png --post post.png --gsd 0.5 --output results/
+python DL-SatelliteImagery/cli.py validate-models [--json]
+python DL-SatelliteImagery/cli.py feature-status [--json]
+```
+
+### Example output
+
+Actual output on a fresh clone (no weights) for the bundled sample pair:
+
 ```text
 ============================================================
   SATELLITE DISASTER ASSESSMENT REPORT
 ============================================================
 
-  Severity Score: 40.2/100
-  Severity Level: HIGH
+  Severity Score: 0.2/100
+  Severity Level: LOW
 
-  Changed Area:      0.00%
-  Flooded Area:      99.84%
-    • Metric Area:   4,089,562,500.00 m² (4,089.562500 km²)
+  Changed Area:      0.00% [unavailable]
+  Flooded Area:      0.00% [unavailable]
+    * Metric Area:   0.00 m2 (0.000000 km2)
   Vegetation Loss:   2.45%
   Water Expansion:   0.00%
-  Building Damage (TRAINED MODE): 0.0/100
-    • Undamaged:    100.0%
-    • Minor Damage: 0.0%
-    • Major Damage: 0.0%
-    • Destroyed:    0.0%
+  Building Damage (ESTIMATED MODE): 0.0/100
+    * Possible:     0.0%
+    * Severe:       0.0%
 
+  Land Cover Mode: heuristic
   Measurement: geospatially calculated (user_supplied)
-  Area Status: Calculated from user ground resolution (GSD = 250.000 m/pixel, Pixel Area = 62500.000 m²)
+  Area Status: Calculated from user ground resolution (GSD = 250.000 m/pixel, Pixel Area = 250000.000 m²) — mask resampled from 512×512 source image
+
+  Model Status:
+    change_detection: WEIGHTS_MISSING (unavailable)
+    flood_detection: WEIGHTS_MISSING (unavailable)
+    building_damage: WEIGHTS_MISSING (unavailable)
 
   Warnings:
-    ⚠ Alignment: PRE image resized from 512×512 to 256×256
-    ⚠ Alignment: POST image resized from 512×512 to 256×256
+    ! Alignment: PRE image resized from 512×512 to 256×256
+    ...
+    ! Severity score excludes unavailable components: change_detection, flood_detection. Actual severity may be higher.
 ============================================================
 ```
+
+The low severity here reflects that flood and change detection are unavailable, not the real event.
 
 ---
 
 ## 🐍 Python API
 
-Integrate the disaster pipeline directly into Python scripts:
-
 ```python
+import sys
+sys.path.insert(0, "DL-SatelliteImagery")   # the package is used from the source tree
+
 import numpy as np
 from PIL import Image
 from disaster_assessment.pipeline import DisasterAnalyzer
 
-# Initialize analyzer (automatically detects CUDA GPU / CPU and loaded model weights)
-analyzer = DisasterAnalyzer()
-
-# Load image pair
-pre_image = np.array(Image.open("sample_images/pre_disaster.png"))
-post_image = np.array(Image.open("sample_images/post_disaster.png"))
-
-# Execute analysis with ground resolution
-report = analyzer.analyze(
-    pre_image=pre_image,
-    post_image=post_image,
-    damage_mode="auto",         # "auto", "trained", or "estimated"
-    meters_per_pixel=250.0,     # GSD in meters per pixel
+analyzer = DisasterAnalyzer(
+    change_model_weights=None,      # path to siamese_unet.pth when available
+    flood_model_weights=None,       # path to flood_unet.pth
+    trained_damage_weights=None,    # path to best_damage_model.pth
 )
 
-# Print human-readable summary
-print(report.summary())
+pre = np.array(Image.open("sample_images/pre_disaster.png").convert("RGB"))
+post = np.array(Image.open("sample_images/post_disaster.png").convert("RGB"))
 
-# Extract structured JSON dictionary
-results_dict = report.to_dict()
+report = analyzer.analyze(pre, post, damage_mode="auto", meters_per_pixel=250.0)
+print(report.summary())
+data = report.to_dict()          # JSON-serialisable
+maps = report.maps               # dict of RGB numpy arrays (overlays, heatmap, ...)
 ```
 
 ---
 
-## 🧠 Model Architectures & Technical Specs
+## 🧠 Models
 
-| Model | Architecture | Parameters | VRAM (fp32) | VRAM (fp16) | Classes / Output |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **SiameseUNet** | Shared 5-Stage Encoder + Skip Difference Decoder | **3,123,249** (~3.12M) | ~12.5 MB | ~6.2 MB | Binary Change (0=No Change, 1=Changed) |
-| **FloodUNet** | 5-Stage Lightweight CNN U-Net | **1,942,577** (~1.94M) | ~7.8 MB | ~3.9 MB | Binary Flood Inundation |
-| **BuildingDamageUNet** | Siamese Dual-Encoder + 3-Way Multi-Scale Fusion | **4,694,628** (~4.69M) | ~18.8 MB | ~9.4 MB | 4 Classes: `Undamaged`, `Minor`, `Major`, `Destroyed` |
-| **Land-Cover U-Net** | Baseline Keras / Heuristic U-Net | **1,939,686** (~1.94M) | ~7.8 MB | N/A | 6 Classes: `Water`, `Land`, `Road`, `Building`, `Vegetation`, `Unlabeled` |
-| **Total Pipeline** | **End-to-End Multi-Model Ensemble** | **~11.7M Total** | **~550 MB** | **~380 MB** | Full Multi-Hazard Disaster Intelligence |
+Parameter counts measured from the model classes in this repository:
+
+| Model | Architecture | Parameters | Output |
+| :--- | :--- | ---: | :--- |
+| `SiameseUNet` | Shared encoder, skip-feature differences, decoder | 3,123,249 | Binary change mask |
+| `FloodUNet` | Lightweight U-Net | 1,942,577 | Binary flood mask |
+| `BuildingDamageUNet` | Siamese dual encoder + multi-scale fusion | 4,694,628 | 4 damage classes |
+| Land cover | HSV heuristic (optional Keras U-Net via `landcover_model_path`, needs `segmentation_models` + Keras) | — | 6 classes |
+
+No accuracy, IoU or VRAM figures are claimed: no trained checkpoint or evaluation run is published with this repository.
+
+### 📦 Model weights
+
+The apps look for weights at:
+
+```
+DL-SatelliteImagery/disaster_assessment/weights/siamese_unet.pth
+DL-SatelliteImagery/disaster_assessment/weights/flood_unet.pth
+DL-SatelliteImagery/disaster_assessment/weights/building_damage/best_damage_model.pth
+```
+
+Checkpoints are loaded with `torch.load(..., weights_only=True)`, so they must contain only tensors and plain Python values (a raw `state_dict`, or a dict with `model_state_dict` plus metadata such as `epoch` and `metrics`). Checkpoints that need arbitrary pickled objects are rejected as `CHECKPOINT_INVALID`.
 
 ---
 
-## 🏋️ Model Training
+## 🏋️ Training the damage model
 
-### 1. Expected Dataset Structure (xBD / xView2 Format):
+Dataset layout (xBD / xView2 style):
+
 ```
 data/damage_dataset/
-├── train/
-│   ├── pre/     # Pre-disaster imagery (*.png, *.jpg, *.tif)
-│   ├── post/    # Post-disaster imagery (*.png, *.jpg, *.tif)
-│   └── masks/   # 4-class ground truth masks (0=Undamaged, 1=Minor, 2=Major, 3=Destroyed)
-└── val/
-    ├── pre/
-    ├── post/
-    └── masks/
+├── train/{pre,post,masks}/   # masks: 0=Undamaged 1=Minor 2=Major 3=Destroyed
+└── val/{pre,post,masks}/
 ```
 
-### 2. Run Training:
-```powershell
-python DL-SatelliteImagery/disaster_assessment/training/train_building_damage.py --data_dir data/damage_dataset --epochs 20 --batch_size 4 --lr 0.001
-```
+The bundled `data/damage_dataset/` holds 10 small **synthetic** samples (random terrain with coloured rectangles) that only demonstrate the format — they are not real disaster imagery.
 
-### 3. Self-Contained Dry Run (Synthetic Benchmark):
-```powershell
+```bash
+# Train on your data (defaults: data/damage_dataset -> weights/building_damage/)
+python DL-SatelliteImagery/disaster_assessment/training/train_building_damage.py \
+       --data_dir data/damage_dataset --epochs 20 --batch_size 4 --lr 0.001
+
+# Resume
+python DL-SatelliteImagery/disaster_assessment/training/train_building_damage.py --resume <dir>/latest_checkpoint.pth
+
+# Pipeline smoke test on generated data (1 epoch)
 python DL-SatelliteImagery/disaster_assessment/training/train_building_damage.py --dry_run
 ```
 
----
-
-## 🧪 Verification & Testing
-
-The project includes an automated test suite with **92 passing tests**:
-
-```powershell
-# Run full pytest suite from repository root
-pytest
-```
-
-```text
-======================== 92 passed, 2 skipped in 14.45s ========================
-```
+The dry run writes its synthetic data and checkpoint to `runs/dry_run/` (git-ignored) and marks the checkpoint `synthetic_data=True`, which the validator refuses — a dry-run model is never reported as "trained". Checkpoints store validation IoU/F1 (0–1) under `metrics`, which the quality gates and status panels display.
 
 ---
 
-## 📁 Repository Organization
+## 🧪 Testing and linting
 
+```bash
+pytest            # 240 passed, 2 skipped (CUDA-only tests) on CPU / Python 3.11
+ruff check .
 ```
-├── app.py                            # Primary Web Dashboard Entrypoint
-├── cli.py                            # Command-Line Interface Tool (Auto-detects weights)
-├── pyproject.toml                    # Modern package definition, build system & pytest config
-├── requirements.txt                  # Streamlined production dependencies
-├── USER_GUIDE.md                     # Comprehensive User & Developer Execution Guide
-│
-├── sample_images/                    # Real NASA MODIS / VIIRS Satellite Imagery (250m GSD)
-│   ├── pre_disaster.png              # Pakistan Indus Valley Pre-Flood (May 2022)
-│   ├── post_disaster.png             # Pakistan Indus Valley Post-Flood (Sep 2022)
-│   ├── landcover_tiles/              # Cairo, Punjab Farms, Amazon, Florida Keys, Dubai
-│   ├── disaster_pairs/               # Bushfire, Deforestation, Hurricane, Earthquake pairs
-│   ├── real_satellite_samples/       # Nile Delta, Turkey Wildfires, Ganges Delta, VIIRS views
-│   └── geotiff_rasters/              # Deduplicated test GeoTIFFs (DEM & vector shapes)
-│
-├── data/
-│   └── damage_dataset/               # Pre-configured xBD-format train/val dataset structure
-│
-└── DL-SatelliteImagery/              # Satellite Deep Learning Core
-    ├── disaster_gradio_app.py        # Unified 3-Tab Gradio Web Dashboard
-    ├── disaster_assessment/          # Production Disaster Assessment Engine
-    │   ├── models/                   # SiameseUNet, FloodUNet, BuildingDamageUNet
-    │   ├── datasets/                 # xBD Triplet Loader & Augmentations
-    │   ├── training/                 # Mixed-Precision Training Loop
-    │   ├── inference/                # Dual-Mode Inference Engine
-    │   ├── analytics/                # GeoTIFF, Geodesic Area & Severity Engines
-    │   ├── visualization/            # Overlays, Heatmaps & Grids
-    │   ├── configs/                  # YAML configurations (severity, damage model)
-    │   └── weights/                  # Model weight checkpoints (best_damage_model.pth)
-    ├── tests/                        # Automated Pytest Suite (92 passed, 2 skipped)
-    └── [WORKSHOP NOTEBOOKS]          # 8 Original Preserved Satellite ML Notebooks
-```
+
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs ruff, the test suite on Python 3.10–3.12 with CPU PyTorch, a CLI smoke test and a training dry run.
 
 ---
+
+## ⚙️ Configuration
+
+| Setting | Where |
+| :--- | :--- |
+| Severity weights / thresholds | `DL-SatelliteImagery/disaster_assessment/configs/severity_config.yaml` |
+| Damage model / training defaults | `configs/damage_model_config.yaml` |
+| Pipeline, models, data sources | `configs/pipeline.yaml`, `models.yaml`, `data_sources.yaml` (see [docs/configuration.md](docs/configuration.md)) |
+| Dashboard bind address / port | `GRADIO_SERVER_NAME` env var (default `127.0.0.1`); port auto-selected from 7860 |
+
+---
+
+## 📁 Repository layout
+
+```
+├── app.py                      # Dashboard entry point (python app.py / disaster-ui)
+├── cli.py                      # Main CLI (disaster-analyzer)
+├── requirements.txt            # Runtime + test dependencies
+├── pyproject.toml              # Package metadata, extras, pytest and ruff config
+├── docs/                       # Architecture, installation, configuration, screenshots
+├── sample_images/              # Sample pre/post pairs, land-cover tiles, GeoTIFFs
+├── data/damage_dataset/        # Tiny synthetic dataset showing the training format
+└── DL-SatelliteImagery/
+    ├── disaster_gradio_app.py  # Gradio UI (4 tabs)
+    ├── cli.py                  # analyze / validate-models / feature-status
+    ├── disaster_assessment/    # Core package: pipeline, models, analytics, preprocessing,
+    │                           # visualization, training, inference, configs, weights/
+    ├── tests/                  # pytest suite
+    └── *.ipynb                 # Original Keras land-cover workshop notebooks (Colab)
+```
+
+More detail: [USER_GUIDE.md](USER_GUIDE.md), [docs/architecture.md](docs/architecture.md), [docs/installation.md](docs/installation.md). `PROJECT_REPORT.md` is a historical development report and may describe earlier states of the code.
+
+---
+
+## 🛠️ Recent fixes
+
+- Flood area was computed at the 256×256 model resolution with the source image's ground resolution, under-reporting area by the resize factor (4× for a 512×512 input). Area is now scaled to the source image or GeoTIFF raster.
+- The dashboard ignored uploaded GeoTIFFs on Gradio 4+ (upload path is a string, not a file object) and its sample examples pointed at a non-existent folder.
+- `--dry_run` training overwrote `data/damage_dataset` and saved a 1-epoch synthetic model into the real weights folder, which the app then reported as a trained model.
+- Checkpoints were unpickled with `weights_only=False` (arbitrary code execution from a crafted `.pth`).
+- `pip install -e .` failed (setuptools flat-layout discovery); `scipy`/`shapely` were missing from `requirements.txt`, so the documented install could not run the full test suite.
+- The dashboard listened on all interfaces by default; it now binds to localhost.
+- Added CI and ruff linting.
+
+## ⚠️ Known limitations
+
+- No trained weights or evaluation results are published; change and flood detection are unavailable until you train or supply them.
+- Land cover is an HSV colour heuristic and is approximate; the "estimated" damage mode is derived from it.
+- Images are resized to 256×256 for analysis; the full-resolution tiling module is not yet connected to the dashboard or CLI.
+- GeoTIFF area assumes the uploaded GeoTIFF covers the same extent as the POST image. `sample_images/geotiff_rasters/elevation_dem_wgs84.tif` has no CRS, so it cannot georeference an analysis.
+- SAR, DEM, spectral, GIS-export, copilot and data-ingestion modules are library code exercised by tests, not end-to-end features in the UI.
+- Older checkpoints produced by a dry run before this fix carry no synthetic flag; delete any `best_damage_model.pth` you created with `--dry_run`.
 
 ## 📄 License
 
-This project is licensed under the [MIT License](./LICENSE).
+`pyproject.toml` declares the MIT license, but the repository does not yet contain a `LICENSE` file.

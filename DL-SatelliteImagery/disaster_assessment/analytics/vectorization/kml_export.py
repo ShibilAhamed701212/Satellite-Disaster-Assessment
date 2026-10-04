@@ -4,7 +4,7 @@ KML export for vector features.
 
 import os
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Optional
+from typing import List
 
 from .polygonizer import PolygonFeature
 

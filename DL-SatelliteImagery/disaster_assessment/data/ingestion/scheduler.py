@@ -2,8 +2,8 @@
 Ingestion scheduler for periodic data updates.
 """
 
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Dict, Optional
 from datetime import datetime
 
 

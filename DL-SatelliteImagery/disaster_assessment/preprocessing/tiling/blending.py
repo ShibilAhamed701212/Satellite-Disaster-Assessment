@@ -5,7 +5,7 @@ Supports uniform averaging, Gaussian weighting, and linear weighting.
 Handles edge tiles and avoids division by zero.
 """
 
-from typing import Dict, Optional
+from typing import Optional
 
 import numpy as np
 

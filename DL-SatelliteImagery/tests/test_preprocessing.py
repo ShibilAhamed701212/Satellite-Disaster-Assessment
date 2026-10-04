@@ -2,7 +2,6 @@
 Tests for preprocessing modules (validation and alignment).
 """
 
-import pytest
 import numpy as np
 
 import sys
@@ -11,11 +10,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from disaster_assessment.preprocessing.image_validation import (
     ImageValidator,
-    ValidationReport,
 )
 from disaster_assessment.preprocessing.image_alignment import (
     ImageAligner,
-    AlignmentReport,
 )
 
 

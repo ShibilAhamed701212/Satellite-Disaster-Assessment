@@ -17,7 +17,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
 import torch
 
 
@@ -129,12 +128,23 @@ class ModelValidator:
 
         # Step 2: Load checkpoint
         try:
-            checkpoint = torch.load(weights_path, map_location=device, weights_only=False)
+            # weights_only: a .pth is a pickle; never execute arbitrary code from it.
+            checkpoint = torch.load(weights_path, map_location=device, weights_only=True)
         except Exception as e:
             return ValidationResult(
                 status=ModelStatus.CHECKPOINT_INVALID,
                 inference_mode=ModelInferenceMode.UNAVAILABLE,
-                reason=f"Failed to load checkpoint: {e}",
+                reason=f"Failed to load checkpoint (tensor-only checkpoints are supported): {e}",
+            )
+
+        if isinstance(checkpoint, dict) and checkpoint.get("synthetic_data"):
+            return ValidationResult(
+                status=ModelStatus.VALIDATION_FAILED,
+                inference_mode=ModelInferenceMode.UNAVAILABLE,
+                reason=(
+                    f"{model_name} checkpoint was trained on synthetic dry-run data "
+                    "and is not a real trained model"
+                ),
             )
 
         # Step 3: Extract metadata
@@ -146,7 +156,7 @@ class ModelValidator:
             return ValidationResult(
                 status=ModelStatus.CHECKPOINT_INVALID,
                 inference_mode=ModelInferenceMode.UNAVAILABLE,
-                reason=f"Checkpoint does not contain a valid state_dict",
+                reason="Checkpoint does not contain a valid state_dict",
                 metadata=metadata,
             )
 
@@ -174,7 +184,7 @@ class ModelValidator:
             if metadata.epoch == 0:
                 result.status = ModelStatus.VALIDATION_FAILED
                 result.inference_mode = ModelInferenceMode.DEGENERATE
-                result.reason = f"Model appears untrained (epoch=0)"
+                result.reason = "Model appears untrained (epoch=0)"
                 return result
 
             # Check quality gates
@@ -187,7 +197,7 @@ class ModelValidator:
         if is_degenerate:
             result.status = ModelStatus.DEGENERATE
             result.inference_mode = ModelInferenceMode.DEGENERATE
-            result.reason = f"Model weights appear degenerate (possible random initialization or collapsed training)"
+            result.reason = "Model weights appear degenerate (possible random initialization or collapsed training)"
             return result
 
         if missing and len(missing) > 0:
@@ -213,7 +223,10 @@ class ModelValidator:
             metadata.num_classes = checkpoint.get("num_classes", 0)
             metadata.image_size = checkpoint.get("image_size", (0, 0))
             metadata.dataset = checkpoint.get("dataset", "unknown")
-            metadata.metrics = checkpoint.get("metrics", {})
+            metadata.metrics = dict(checkpoint.get("metrics") or {})
+            # Older training checkpoints stored only best_val_iou, in percent.
+            if "best_val_iou" in checkpoint and not metadata.metrics:
+                metadata.metrics["val_iou"] = float(checkpoint["best_val_iou"]) / 100.0
         elif "model_state_dict" in checkpoint:
             # Has structure but no metadata fields
             metadata.has_metadata = False

@@ -3,7 +3,7 @@ DEM (Digital Elevation Model) loading and preprocessing.
 """
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import numpy as np

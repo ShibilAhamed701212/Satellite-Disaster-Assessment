@@ -33,8 +33,8 @@ _dl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DL-Satellit
 if _dl_path not in sys.path:
     sys.path.insert(0, _dl_path)
 
-import numpy as np
-from PIL import Image
+import numpy as np  # noqa: E402 (after sys.path setup)
+from PIL import Image  # noqa: E402
 
 try:
     from disaster_assessment.pipeline.disaster_analyzer import DisasterAnalyzer
@@ -44,7 +44,7 @@ except ImportError:
     DisasterAnalyzer = getattr(_mod, "DisasterAnalyzer")
 except OSError as e:
     if "DLL" in str(e) or "c10" in str(e) or "1114" in str(e):
-        print(f"\n[Environment Error] PyTorch dynamic library failed to load in current Python environment.")
+        print("\n[Environment Error] PyTorch dynamic library failed to load in current Python environment.")
         print(f"Details: {e}")
         print("\nPlease run this script using the project's dedicated virtual environment:")
         print("  PowerShell (Windows):  .\\.venv\\Scripts\\python.exe cli.py [options]")

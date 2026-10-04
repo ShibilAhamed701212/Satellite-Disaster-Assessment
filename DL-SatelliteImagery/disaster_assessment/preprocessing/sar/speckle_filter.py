@@ -51,7 +51,6 @@ def lee_filter_sar(
 
     data_f = data.astype(np.float64)
     result = data_f.copy()
-    half_k = kernel_size // 2
     h, w = data_f.shape
 
     # Local statistics

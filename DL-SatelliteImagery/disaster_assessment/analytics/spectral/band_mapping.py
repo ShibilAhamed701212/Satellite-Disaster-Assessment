@@ -5,7 +5,7 @@ Different satellites have different band orders and names.
 This module provides standard mappings and a configuration system.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 

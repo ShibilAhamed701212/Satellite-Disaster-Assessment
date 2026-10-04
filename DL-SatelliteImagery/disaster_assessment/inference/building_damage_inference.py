@@ -25,21 +25,19 @@ Safety:
 
 import os
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 
 from ..analytics.damage_metrics import DamageMetrics, BuildingDamageResult
 from ..models.base_unet import get_device
 from ..models.building_damage_model import (
     DAMAGE_CLASSES,
-    NUM_DAMAGE_CLASSES,
     BuildingDamageUNet,
     create_building_damage_model,
 )
-from ..models.validation import ModelValidator, ModelStatus, ModelInferenceMode, ValidationResult
+from ..models.validation import ModelValidator, ModelStatus, ValidationResult
 
 
 # Color mapping for the 4 trained classes (RGB)
