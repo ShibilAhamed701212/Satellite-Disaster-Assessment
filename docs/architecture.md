@@ -146,4 +146,4 @@ DL-SatelliteImagery/disaster_assessment/
 
 ## Backward Compatibility
 
-All existing 92 tests continue to pass. The existing `DisasterAnalyzer`, `DisasterReport`, CLI, Gradio UI, and all public APIs are preserved without breaking changes.
+The full pytest suite (240 tests, 2 CUDA-only tests skipped on CPU) passes. The existing `DisasterAnalyzer`, `DisasterReport`, CLI, Gradio UI, and all public APIs are preserved without breaking changes.
