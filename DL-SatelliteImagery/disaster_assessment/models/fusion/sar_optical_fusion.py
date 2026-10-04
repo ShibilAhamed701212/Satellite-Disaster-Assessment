@@ -11,13 +11,13 @@ Status: IMPLEMENTED ARCHITECTURE
 Requires trained weights for production inference.
 """
 
-from typing import List, Optional, Tuple
+from typing import List
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..base_unet import ConvBlock, LightweightEncoder, count_parameters, get_device
+from ..base_unet import ConvBlock, LightweightEncoder
 
 
 class SAROpticalFusionUNet(nn.Module):

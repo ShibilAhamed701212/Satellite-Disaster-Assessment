@@ -10,7 +10,7 @@ Current mode: STATIC DATA MODE (processes on-demand analysis results)
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .entities import (
     DisasterEvent,

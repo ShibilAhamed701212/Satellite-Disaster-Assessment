@@ -4,6 +4,8 @@ Pre-imports torch before the main app to avoid Windows DLL initialization
 errors (WinError 1114 on c10.dll) that occur when torch is imported as
 part of a script file's module resolution.
 """
+import os
+
 import torch  # noqa: F401 — must be imported before the app module
 
 from disaster_gradio_app import create_app  # noqa: E402
@@ -22,7 +24,7 @@ if __name__ == "__main__":
     print(f"Starting Satellite Disaster Assessment on http://127.0.0.1:{port}")
     app = create_app()
     app.launch(
-        server_name="0.0.0.0",
+        server_name=os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1"),
         server_port=port,
         share=False,
         show_error=True,

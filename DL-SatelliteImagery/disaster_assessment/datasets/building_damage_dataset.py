@@ -17,7 +17,6 @@ from typing import Callable, Dict, List, Optional, Tuple
 import cv2
 import numpy as np
 import torch
-from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 
 

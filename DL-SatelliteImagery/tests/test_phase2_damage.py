@@ -19,12 +19,9 @@ from disaster_assessment.datasets.building_damage_dataset import (
 )
 from disaster_assessment.inference.building_damage_inference import (
     BuildingDamageInference,
-    DamageAssessmentOutput,
 )
 from disaster_assessment.models.base_unet import count_parameters
 from disaster_assessment.models.building_damage_model import (
-    DAMAGE_CLASSES,
-    NUM_DAMAGE_CLASSES,
     BuildingDamageUNet,
     create_building_damage_model,
 )

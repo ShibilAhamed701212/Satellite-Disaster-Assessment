@@ -6,7 +6,6 @@ Uses synthetic 256×256 images — no large dataset downloads required.
 
 import pytest
 import torch
-import numpy as np
 
 import sys
 import os

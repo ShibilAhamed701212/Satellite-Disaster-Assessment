@@ -14,7 +14,7 @@ IMPORTANT SCIENTIFIC DISCLAIMER:
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
 

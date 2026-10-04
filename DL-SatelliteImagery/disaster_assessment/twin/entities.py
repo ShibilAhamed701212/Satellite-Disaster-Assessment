@@ -3,7 +3,6 @@ Entity definitions for the Digital Twin state engine.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 

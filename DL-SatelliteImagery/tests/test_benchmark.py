@@ -2,16 +2,12 @@
 Tests for deployment tools (benchmarking, ONNX export).
 """
 
-import pytest
-import torch
-import numpy as np
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from disaster_assessment.deployment.benchmark import benchmark_model, BenchmarkResult
-from disaster_assessment.models.siamese_unet import SiameseUNet
 from disaster_assessment.models.flood_unet import FloodUNet
 
 

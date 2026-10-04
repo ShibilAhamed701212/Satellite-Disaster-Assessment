@@ -149,7 +149,6 @@ class MapViewer:
             return None
 
         try:
-            import folium
             # Add side-by-side comparison
             # Note: folium-sideby-side may need to be installed separately
             map_obj.location = center

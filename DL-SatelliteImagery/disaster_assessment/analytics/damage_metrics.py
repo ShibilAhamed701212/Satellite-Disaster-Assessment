@@ -61,7 +61,7 @@ class BuildingDamageResult:
             f"  Possible Damage: {self.possible_damage_percentage:.1f}% ({self.possible_damage_pixels:,} px)",
             f"  Severe Damage:   {self.severe_damage_percentage:.1f}% ({self.severe_damage_pixels:,} px)",
             f"  Overall Score:   {self.overall_damage_score:.1f}/100",
-            f"",
+            "",
             f"  ⚠ {self.disclaimer}",
         ]
         return "\n".join(lines)

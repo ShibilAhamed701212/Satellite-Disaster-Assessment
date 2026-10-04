@@ -2,7 +2,6 @@
 Tests for multispectral indices and band mapping.
 """
 
-import pytest
 import numpy as np
 import sys
 import os
@@ -13,7 +12,7 @@ from disaster_assessment.analytics.spectral.indices import (
     compute_ndvi, compute_ndwi, compute_mndwi, compute_nbr, compute_dnbr,
 )
 from disaster_assessment.analytics.spectral.band_mapping import (
-    BandMapping, SENTINEL2_BANDS, LANDSAT_BANDS, RGB_BANDS, get_band_mapping,
+    SENTINEL2_BANDS, LANDSAT_BANDS, RGB_BANDS, get_band_mapping,
 )
 from disaster_assessment.analytics.spectral.validators import validate_bands, extract_band
 

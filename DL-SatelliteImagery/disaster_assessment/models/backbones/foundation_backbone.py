@@ -6,7 +6,6 @@ No foundation model weights are downloaded automatically.
 Requires explicit setup and weight download.
 """
 
-from typing import List, Optional
 
 from .registry import register_model
 

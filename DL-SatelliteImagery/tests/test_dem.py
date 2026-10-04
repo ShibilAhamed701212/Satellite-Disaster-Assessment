@@ -9,9 +9,9 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from disaster_assessment.analytics.elevation.terrain_analysis import TerrainAnalyzer, TerrainResult
-from disaster_assessment.analytics.elevation.flood_depth import FloodDepthEstimator, FloodDepthResult
-from disaster_assessment.analytics.elevation.volume import VolumeCalculator, VolumeResult
+from disaster_assessment.analytics.elevation.terrain_analysis import TerrainAnalyzer
+from disaster_assessment.analytics.elevation.flood_depth import FloodDepthEstimator
+from disaster_assessment.analytics.elevation.volume import VolumeCalculator
 
 
 class TestTerrainAnalyzer:

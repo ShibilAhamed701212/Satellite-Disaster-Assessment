@@ -3,7 +3,7 @@ Base class for pluggable model backbones.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn

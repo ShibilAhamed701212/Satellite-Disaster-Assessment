@@ -2,7 +2,6 @@
 Tests for SAR-Optical fusion models.
 """
 
-import pytest
 import torch
 import sys
 import os

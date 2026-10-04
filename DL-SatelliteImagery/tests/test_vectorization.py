@@ -2,7 +2,6 @@
 Tests for vectorization, GeoJSON export.
 """
 
-import pytest
 import numpy as np
 import json
 import sys

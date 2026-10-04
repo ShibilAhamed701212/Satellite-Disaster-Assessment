@@ -133,10 +133,8 @@ def create_siamese_unet(
     model = SiameseUNet(in_channels=in_channels, dropout=dropout)
 
     if weights_path is not None:
-        try:
-            state_dict = torch.load(weights_path, map_location=device, weights_only=True)
-        except Exception:
-            state_dict = torch.load(weights_path, map_location=device, weights_only=False)
+        # weights_only: never unpickle arbitrary objects from a checkpoint file.
+        state_dict = torch.load(weights_path, map_location=device, weights_only=True)
         if isinstance(state_dict, dict) and "model_state_dict" in state_dict:
             state_dict = state_dict["model_state_dict"]
         model.load_state_dict(state_dict)

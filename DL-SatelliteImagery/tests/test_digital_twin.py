@@ -2,16 +2,14 @@
 Tests for the Digital Twin state engine.
 """
 
-import pytest
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from disaster_assessment.twin.state import DisasterTwin, TwinState
+from disaster_assessment.twin.state import DisasterTwin
 from disaster_assessment.twin.entities import (
-    DisasterEvent, HazardLayer, FloodRegion,
-    DamagedBuildingRegion, AffectedArea, SatelliteObservation,
+    DisasterEvent, SatelliteObservation,
 )
 from disaster_assessment.twin.versioning import VersionTracker
 

@@ -6,7 +6,7 @@ disaster indicators (change, flood, damage) into a single
 color-coded intensity map.
 """
 
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 import cv2
 import numpy as np

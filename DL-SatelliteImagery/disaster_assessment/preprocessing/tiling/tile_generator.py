@@ -6,8 +6,8 @@ Each tile retains geospatial metadata (transform, CRS, bounds).
 """
 
 import math
-from dataclasses import dataclass, field
-from typing import Iterator, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -141,9 +141,6 @@ class TileGenerator:
 
         if self.config.blend_mode == "uniform":
             return np.ones((h, w), dtype=np.float32), None
-
-        # Compute fractional overlap at edges
-        overlap_px = int(ts * self.config.overlap)
 
         if self.config.blend_mode == "gaussian":
             # Gaussian weights centered on tile

@@ -27,7 +27,6 @@ Model safety:
 """
 
 import gc
-import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -39,7 +38,7 @@ from ..preprocessing.image_alignment import ImageAligner, AlignmentReport
 from ..models.siamese_unet import SiameseUNet, create_siamese_unet
 from ..models.flood_unet import FloodUNet, create_flood_unet
 from ..models.base_unet import get_device
-from ..models.validation import ModelRegistry, ModelInferenceMode, ModelStatus, ValidationResult
+from ..models.validation import ModelRegistry, ValidationResult
 from ..analytics.area_calculator import AreaCalculator
 from ..analytics.geospatial_area import GeospatialAreaCalculator, GeospatialFloodResult
 from ..analytics.damage_metrics import DamageMetrics, BuildingDamageResult
@@ -48,7 +47,6 @@ from ..analytics.severity_engine import SeverityEngine, SeverityResult
 from ..inference.building_damage_inference import (
     BuildingDamageInference,
     DamageAssessmentOutput,
-    TRAINED_DAMAGE_COLORS,
 )
 from ..visualization.overlays import OverlayRenderer, LANDCOVER_COLORS, LANDCOVER_LABELS
 from ..visualization.heatmap import HeatmapGenerator
@@ -409,7 +407,7 @@ class DisasterAnalyzer:
                         "jaccard_coef": jaccard_coef,
                     },
                 )
-            except Exception as e:
+            except Exception:
                 self._landcover_model = None
 
     def _run_landcover_segmentation(self, image: np.ndarray) -> Tuple[np.ndarray, str]:
@@ -601,12 +599,15 @@ class DisasterAnalyzer:
             flood_mask=flood_mask,
             geotiff_path=geotiff_path,
             meters_per_pixel=effective_gsd,
+            source_shape=tuple(post_image.shape[:2]),
         )
         report.flood_result = flood_geo
         report.flood_percentage = flood_geo.flood_percentage
         report.flood_area_m2 = flood_geo.flood_area_m2
         report.flood_area_km2 = flood_geo.flood_area_km2
         report.area_status = flood_geo.area_status
+        for w in flood_geo.georeference.warnings:
+            report.warnings.append(f"GeoTIFF: {w}")
 
         if flood_geo.flood_area_m2 is not None:
             report.measurement_basis = (

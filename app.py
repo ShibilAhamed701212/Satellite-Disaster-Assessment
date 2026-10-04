@@ -38,7 +38,7 @@ except ImportError:
         raise
 except OSError as e:
     if "DLL" in str(e) or "c10" in str(e) or "1114" in str(e):
-        print(f"\n[Environment Error] PyTorch dynamic library failed to load in current Python environment.")
+        print("\n[Environment Error] PyTorch dynamic library failed to load in current Python environment.")
         print(f"Details: {e}")
         print("\nPlease run this application using the project's dedicated virtual environment:")
         print("  PowerShell (Windows):  .\\.venv\\Scripts\\python.exe app.py")
@@ -61,7 +61,7 @@ def main():
     selected_port = get_open_port(7860) or 7860
     print(f"🛰️ Launching Satellite Disaster Assessment Dashboard on port {selected_port}...")
     app.launch(
-        server_name="0.0.0.0",
+        server_name=os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1"),
         server_port=selected_port,
         share=False,
         show_error=True,
