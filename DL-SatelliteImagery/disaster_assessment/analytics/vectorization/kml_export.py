@@ -15,6 +15,9 @@ def export_kml(
 ) -> str:
     """Export polygon features to KML file.
 
+    KML coordinates are longitude/latitude, so features should come from a
+    geographic (EPSG:4326) raster transform.
+
     Args:
         features: List of PolygonFeature objects.
         output_path: Path for the output .kml file.
@@ -40,6 +43,7 @@ def export_kml(
         5: "ff9b9b9b",  # Gray
     }
 
+    styled_classes = set()
     for feat in features:
         placemark = ET.SubElement(document, "Placemark")
 
@@ -49,14 +53,16 @@ def export_kml(
         style_url = ET.SubElement(placemark, "styleUrl")
         style_url.text = f"#style_{feat.class_id}"
 
-        # Add style if not defined
-        style = ET.SubElement(document, "Style", id=f"style_{feat.class_id}")
-        line_style = ET.SubElement(style, "LineStyle")
-        color = ET.SubElement(line_style, "color")
-        color.text = class_colors.get(feat.class_id, "ffffffff")
-        poly_style = ET.SubElement(style, "PolyStyle")
-        fill_color = ET.SubElement(poly_style, "color")
-        fill_color.text = class_colors.get(feat.class_id, "ffffffff")
+        # Add the class style once (KML ids must be unique)
+        if feat.class_id not in styled_classes:
+            styled_classes.add(feat.class_id)
+            style = ET.SubElement(document, "Style", id=f"style_{feat.class_id}")
+            line_style = ET.SubElement(style, "LineStyle")
+            color = ET.SubElement(line_style, "color")
+            color.text = class_colors.get(feat.class_id, "ffffffff")
+            poly_style = ET.SubElement(style, "PolyStyle")
+            fill_color = ET.SubElement(poly_style, "color")
+            fill_color.text = class_colors.get(feat.class_id, "ffffffff")
 
         # Geometry
         try:

@@ -74,5 +74,9 @@ def export_predictions_geojson(
     """Quick export: mask -> GeoJSON in one call."""
     from .polygonizer import mask_to_polygons
 
-    polygons = mask_to_polygons(prediction, class_labels=class_labels)
+    polygons = mask_to_polygons(
+        prediction,
+        class_labels=class_labels,
+        transform=(raster_metadata or {}).get("transform"),
+    )
     return export_geojson(polygons, output_path, raster_metadata)

@@ -129,3 +129,50 @@ class TestGeoJSONExport:
             assert os.path.isfile(result)
         finally:
             shutil.rmtree(tmp_dir)
+
+
+class TestGeoreferencedExport:
+    """raster_metadata['transform'] must place polygons in map coordinates."""
+
+    def test_transform_applied_to_polygons(self):
+        from rasterio.transform import from_origin
+
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[2:4, 5:8] = 1  # rows 2-3, cols 5-7
+        transform = from_origin(500000.0, 4000000.0, 10.0, 10.0)
+
+        features = mask_to_polygons(mask, transform=transform)
+
+        assert len(features) == 1
+        minx, miny, maxx, maxy = features[0].geometry.bounds
+        assert (minx, maxx) == (500050.0, 500080.0)
+        assert (miny, maxy) == (3999960.0, 3999980.0)
+        # Pixel area is still reported in pixels.
+        assert features[0].area_pixels == 6
+
+    def test_export_predictions_uses_metadata_transform(self, tmp_path):
+        import json
+        from rasterio.transform import from_origin
+
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[0:2, 0:2] = 1
+        out = tmp_path / "geo.geojson"
+        meta = {"crs": "EPSG:32633", "transform": from_origin(500000.0, 4000000.0, 10.0, 10.0)}
+
+        export_predictions(mask, raster_metadata=meta, output_path=str(out), simplify_tolerance=0)
+
+        geom = json.loads(out.read_text())["features"][0]["geometry"]
+        xs = [pt[0] for pt in geom["coordinates"][0]]
+        assert min(xs) == 500000.0 and max(xs) == 500020.0
+
+
+def test_kml_defines_each_class_style_once(tmp_path):
+    from disaster_assessment.analytics.vectorization.kml_export import export_kml
+
+    mask = np.zeros((20, 20), dtype=np.uint8)
+    mask[0:3, 0:3] = 1
+    mask[10:13, 10:13] = 1  # second polygon, same class
+    out = tmp_path / "out.kml"
+    export_kml(mask_to_polygons(mask), str(out))
+
+    assert out.read_text().count('id="style_1"') == 1

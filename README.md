@@ -29,7 +29,7 @@ A Python toolkit for comparing **pre- and post-disaster satellite images**: land
 - **Geospatial flood area** from a GeoTIFF (projected CRS in metres, geographic CRS converted with WGS-84 latitude-dependent scale) or a user-supplied ground resolution (m/pixel). Area is measured at the *source image's* resolution even though models run on a 256×256 copy. Without either, only pixel percentages are reported — km² are never invented.
 - **Configurable severity score** (0–100 → `LOW` / `MODERATE` / `HIGH` / `CRITICAL`) with weights in [`configs/severity_config.yaml`](DL-SatelliteImagery/disaster_assessment/configs/severity_config.yaml).
 - **Visual outputs:** land-cover maps, change / flood / damage overlays, vegetation-loss overlay and a combined disaster heatmap.
-- **Supporting modules** (tested, not wired into the dashboard): large-GeoTIFF tiling and blending, NDVI/NDWI/NBR/dNBR spectral indices, Sentinel-1 SAR normalisation and speckle filtering, DEM terrain / flood-depth analysis, GeoJSON / KML / Shapefile export, an in-memory "digital twin" state store, a RAG copilot (needs a local Ollama server) and data-ingestion stubs (need API credentials). Run `python DL-SatelliteImagery/cli.py feature-status` to see what is operational in your environment.
+- **Supporting modules** (tested, not wired into the dashboard): large-GeoTIFF tiling and blending, NDVI/NDWI/NBR/dNBR spectral indices, Sentinel-1 SAR normalisation and speckle filtering, DEM terrain / flood-depth analysis, GeoJSON / KML / Shapefile export (pass the raster transform to get map coordinates), an in-memory "digital twin" state store, a RAG copilot (needs a local Ollama server) and data-ingestion stubs (need API credentials). Run `python DL-SatelliteImagery/cli.py feature-status` to see what is operational in your environment.
 
 ---
 
@@ -263,7 +263,7 @@ The dry run writes its synthetic data and checkpoint to `runs/dry_run/` (git-ign
 ## 🧪 Testing and linting
 
 ```bash
-pytest            # 240 passed, 2 skipped (CUDA-only tests) on CPU / Python 3.11
+pytest            # 243 passed, 2 skipped (CUDA-only tests) on CPU / Python 3.11
 ruff check .
 ```
 
@@ -314,6 +314,7 @@ More detail: [USER_GUIDE.md](USER_GUIDE.md), [docs/architecture.md](docs/archite
 - `pip install -e .` failed (setuptools flat-layout discovery); `scipy`/`shapely` were missing from `requirements.txt`, so the documented install could not run the full test suite.
 - The dashboard listened on all interfaces by default; it now binds to localhost.
 - Added CI and ruff linting.
+- GIS export ignored `raster_metadata["transform"]`, so GeoJSON/Shapefile/KML polygons were written in pixel coordinates (while the Shapefile was tagged with the raster CRS). Polygons are now transformed to map coordinates, and KML no longer repeats the same style id per feature.
 
 ## ⚠️ Known limitations
 
