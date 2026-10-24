@@ -2,6 +2,7 @@
 Tests for vectorization, GeoJSON export.
 """
 
+import pytest
 import numpy as np
 import json
 import sys
@@ -129,3 +130,83 @@ class TestGeoJSONExport:
             assert os.path.isfile(result)
         finally:
             shutil.rmtree(tmp_dir)
+
+
+class TestGeoreferencedExport:
+    """raster_metadata['transform'] must place polygons in map coordinates."""
+
+    def test_transform_applied_to_polygons(self):
+        from rasterio.transform import from_origin
+
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[2:4, 5:8] = 1  # rows 2-3, cols 5-7
+        transform = from_origin(500000.0, 4000000.0, 10.0, 10.0)
+
+        features = mask_to_polygons(mask, transform=transform)
+
+        assert len(features) == 1
+        minx, miny, maxx, maxy = features[0].geometry.bounds
+        assert (minx, maxx) == (500050.0, 500080.0)
+        assert (miny, maxy) == (3999960.0, 3999980.0)
+        # Pixel area is still reported in pixels.
+        assert features[0].area_pixels == 6
+
+    def test_export_predictions_uses_metadata_transform(self, tmp_path):
+        import json
+        from rasterio.transform import from_origin
+
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[0:2, 0:2] = 1
+        out = tmp_path / "geo.geojson"
+        meta = {"crs": "EPSG:32633", "transform": from_origin(500000.0, 4000000.0, 10.0, 10.0)}
+
+        export_predictions(mask, raster_metadata=meta, output_path=str(out), simplify_tolerance=0)
+
+        doc = json.loads(out.read_text())
+        xs = [pt[0] for pt in doc["features"][0]["geometry"]["coordinates"][0]]
+        ys = [pt[1] for pt in doc["features"][0]["geometry"]["coordinates"][0]]
+        # UTM 33N easting 500000 is the 15 deg E central meridian; ~36 deg N.
+        assert min(xs) == pytest.approx(15.0, abs=1e-6)
+        assert 15.0 < max(xs) < 15.001
+        assert 36.0 < min(ys) < max(ys) < 36.2
+        assert doc["metadata"]["crs"] == "EPSG:4326"
+        assert doc["metadata"]["source_crs"] == "EPSG:32633"
+
+    def test_export_predictions_kml_in_wgs84(self, tmp_path):
+        from rasterio.transform import from_origin
+
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[0:2, 0:2] = 1
+        out = tmp_path / "geo.kml"
+        meta = {"crs": "EPSG:32633", "transform": from_origin(500000.0, 4000000.0, 10.0, 10.0)}
+
+        export_predictions(mask, raster_metadata=meta, output_path=str(out), format="kml")
+
+        text = out.read_text()
+        assert "500000" not in text
+        assert "15.0" in text
+
+    def test_resized_mask_scales_transform(self):
+        from rasterio.transform import from_origin
+
+        from disaster_assessment.analytics.vectorization.polygonizer import mask_transform
+
+        meta = {"transform": from_origin(0.0, 100.0, 1.0, 1.0), "width": 40, "height": 20}
+        t = mask_transform(meta, (10, 20))  # mask is half the source size
+        assert t.a == pytest.approx(2.0) and t.e == pytest.approx(-2.0)
+        assert (t.c, t.f) == (0.0, 100.0)
+        # Same size, or no size info: transform is unchanged.
+        assert mask_transform({"transform": meta["transform"]}, (10, 20)).a == 1.0
+        assert mask_transform(None, (10, 20)) is None
+
+
+def test_kml_defines_each_class_style_once(tmp_path):
+    from disaster_assessment.analytics.vectorization.kml_export import export_kml
+
+    mask = np.zeros((20, 20), dtype=np.uint8)
+    mask[0:3, 0:3] = 1
+    mask[10:13, 10:13] = 1  # second polygon, same class
+    out = tmp_path / "out.kml"
+    export_kml(mask_to_polygons(mask), str(out))
+
+    assert out.read_text().count('id="style_1"') == 1

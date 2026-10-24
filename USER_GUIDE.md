@@ -252,7 +252,7 @@ To run the complete automated test suite:
 ```
 
 ```
-======================= 240 passed, 2 skipped (CPU, Python 3.11) =======================
+======================= 245 passed, 2 skipped (CPU, Python 3.11) =======================
 ```
 
 ---

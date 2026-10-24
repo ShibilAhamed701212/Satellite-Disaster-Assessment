@@ -71,8 +71,13 @@ def export_predictions_geojson(
     class_labels: Optional[Dict[int, str]] = None,
     raster_metadata: Optional[Dict] = None,
 ) -> str:
-    """Quick export: mask -> GeoJSON in one call."""
-    from .polygonizer import mask_to_polygons
+    """Quick export: mask -> GeoJSON (WGS 84 when a CRS is given) in one call."""
+    from .polygonizer import _wgs84_metadata, mask_to_polygons, mask_transform, reproject_to_wgs84
 
-    polygons = mask_to_polygons(prediction, class_labels=class_labels)
-    return export_geojson(polygons, output_path, raster_metadata)
+    polygons = mask_to_polygons(
+        prediction,
+        class_labels=class_labels,
+        transform=mask_transform(raster_metadata, prediction.shape),
+    )
+    reproject_to_wgs84(polygons, (raster_metadata or {}).get("crs"))
+    return export_geojson(polygons, output_path, _wgs84_metadata(raster_metadata))
